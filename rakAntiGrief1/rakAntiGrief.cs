@@ -32,8 +32,8 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.1.16";
-            TDSMBuild = 27; //Current Release - Working
+            Version = "0.1.17";
+            TDSMBuild = 28; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
             //Create folder if it doesn't exist
