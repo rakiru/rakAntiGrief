@@ -27,9 +27,6 @@ namespace rakAntiGrief
         public bool configSignEdit = false;
         public bool configPlayerProjectile = false;
         public int configRange = 0;
-		public string configAdminTileTypeString = "";
-		public int[] configAdminTileType;
-		public bool configAdminTile = false;
 		public bool configLavaFlow = false;
 		public bool configWaterFlow = false;
         public bool isEnabled = false;
@@ -59,36 +56,13 @@ namespace rakAntiGrief
             configSignEdit = properties.SignEdit;
             configPlayerProjectile = properties.PlayerProjectile;
             configRange = properties.Range;
-			configAdminTileTypeString = properties.AdminTileType;
-			configAdminTile = properties.AdminTile;
 			configLavaFlow = properties.LavaFlow;
 			configWaterFlow = properties.WaterFlow;
-			if (configAdminTile)
-			{
-				String[] temp = configAdminTileTypeString.Split(',');
-				if (temp.Length == 0)
-				{
-					ProgramLog.Error.Log("[" + base.Name + "]: No admin tiles specified.  Disabling admin tile protection.");
-					configAdminTile = false;
-				}
-				configAdminTileType = new int[temp.Length];
-				try
-				{
-					for (int i = 0; i < temp.Length; i++)
-					{
-						configAdminTileType[i] = Int32.Parse(temp[i]);
-					}
-				}
-				catch
-				{
-					ProgramLog.Error.Log("[" + base.Name + "]: Error parsing admin tiles.  Disabling admin tile protection.");
-					configAdminTile = false;
-				}
-			}
+			properties.Save();
+
 			states = new HashSet<PlayerState>();
 			timer = new System.Threading.Timer(ExpireProjectiles);
 			timer.Change(1000, 1000);
-			properties.Save();
 
 			AddCommand("killproj").Calls(KillProjCommand);
         }
@@ -135,31 +109,6 @@ namespace rakAntiGrief
 					return;
 				}
 			}
-
-			// blue bricks are admin bricks
-			var tile = Main.tile.At(x, y);
-			bool adminTile = false;
-			if (configAdminTile)
-			{
-				for (int i = 0; i < configAdminTileType.Length; i++)
-				{
-					if (tile.Type == configAdminTileType[i])
-					{
-						adminTile = true;
-						break;
-					}
-				}
-
-				if (adminTile)
-				{
-					if ((ev.Lava && configLavaFlow) || (!ev.Lava && configWaterFlow))
-					{
-						ProgramLog.Debug.Log("[" + base.Name + "]: Cancelled {1} flow by {0} in admin area", player.Name ?? player.whoAmi.ToString(), ev.Lava ? "lava" : "water");
-						ev.Cancelled = true;
-						return;
-					}
-				}
-			}
 		}
 
 		public override void onPlayerTileChange(PlayerTileChangeEvent Event)
@@ -182,25 +131,6 @@ namespace rakAntiGrief
 				{
 					Event.Cancelled = true;
 					return;
-				}
-
-				// blue bricks are admin bricks
-				if (configAdminTile)
-				{
-					if (Event.Tile.Type == 41 || Event.Tile.Wall == 7)
-					{
-						ProgramLog.Admin.Log("[" + base.Name + "]: Prevented {0} from editing admin bricks.", player.Name);
-						Event.Cancelled = true;
-						return;
-					}
-
-					var tile = Main.tile.At(x, y);
-					if (tile.Type == 41 || tile.Type == 7)
-					{
-						ProgramLog.Admin.Log("[" + base.Name + "]: Prevented {0} from editing admin bricks.", player.Name);
-						Event.Cancelled = true;
-						return;
-					}
 				}
 			}
 		}

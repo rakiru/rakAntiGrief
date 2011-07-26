@@ -13,8 +13,6 @@ namespace rakAntiGrief
         private const bool DEFAULT_SIGN_EDIT = true;
         private const bool DEFAULT_PLAYER_PROJECTILE = true;
         private const int DEFAULT_RANGE = 6;
-		private const String DEFAULT_ADMIN_TILE_TYPE = "";
-		private const bool DEFAULT_ADMIN_TILE = false;
 		private const bool DEFAULT_LAVA_FLOW = true;
 		private const bool DEFAULT_WATER_FLOW = true;
 
@@ -23,8 +21,6 @@ namespace rakAntiGrief
         private const String SIGN_EDIT = "SignEdit";
         private const String PLAYER_PROJECTILE = "PlayerProjectile";
 		private const String RANGE = "Range";
-		private const String ADMIN_TILE_TYPE = "AdminTileType";
-		private const String ADMIN_TILE = "AdminTile";
 		private const String LAVA_FLOW = "LavaFlow";
 		private const String WATER_FLOW = "WaterFlow";
 
@@ -78,22 +74,6 @@ namespace rakAntiGrief
                 return getValue(RANGE, DEFAULT_RANGE);
             }
         }
-
-		public String AdminTileType
-		{
-			get
-			{
-				return getValue(ADMIN_TILE_TYPE, DEFAULT_ADMIN_TILE_TYPE);
-			}
-		}
-
-		public bool AdminTile
-		{
-			get
-			{
-				return getValue(ADMIN_TILE, DEFAULT_ADMIN_TILE);
-			}
-		}
 
 		public bool LavaFlow
 		{
