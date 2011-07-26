@@ -15,6 +15,8 @@ namespace rakAntiGrief
         private const bool DEFAULT_BLOCK_LIQUIDS = true; //Block liquids from being used
         private const int DEFAULT_EXTENDED_REACH_RANGE = 6; //Max distance to edit tile/door/sign
         private const bool DEFAULT_SPAM_EXPLOSIVES_KICK = true; //Kick user if they spam explosives (using a modded client)
+		private const bool DEFAULT_LAVA_FLOW = true;
+		private const bool DEFAULT_WATER_FLOW = true;
 
         private const String EXTENDED_REACH_DOOR = "ExtendedReachDoor";
         private const String EXTENDED_REACH = "ExtendedReach";
@@ -23,6 +25,8 @@ namespace rakAntiGrief
         private const String BLOCK_LIQUIDS = "BlockLiquids";
         private const String EXTENDED_REACH_RANGE = "ExtendedReachRange";
         private const String SPAM_EXPLOSIVES_KICK = "SpamExplosivesKick";
+		private const String LAVA_FLOW = "LavaFlow";
+		private const String WATER_FLOW = "WaterFlow";
 
         public Properties(String propertiesPath) : base(propertiesPath) { }
 
@@ -82,5 +86,21 @@ namespace rakAntiGrief
                 return getValue(EXTENDED_REACH_RANGE, DEFAULT_EXTENDED_REACH_RANGE);
             }
         }
+
+		public bool LavaFlow
+		{
+			get
+			{
+				return getValue(LAVA_FLOW, DEFAULT_LAVA_FLOW);
+			}
+		}
+
+		public bool WaterFlow
+		{
+			get
+			{
+				return getValue(WATER_FLOW, DEFAULT_WATER_FLOW);
+			}
+		}
     }
 }
