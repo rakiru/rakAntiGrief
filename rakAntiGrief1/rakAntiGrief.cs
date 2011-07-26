@@ -17,14 +17,15 @@ namespace rakAntiGrief
     {
 
         // tConsole is used for when logging Output to the console & a log file.
-
+        
         public Properties properties;
         public string pluginFolder;
-        public bool configDoorChange = false;
-        public bool configTileChange = false;
-        public bool configSignEdit = false;
-        public bool configPlayerProjectile = false;
-        public int configRange = 0;
+        public bool configExtendedReachDoor = false;
+        public bool configExtendedReach = false;
+        public bool configExtendedReachSign = false;
+        public bool configBlockExplosives = false;
+        public bool configBlockLiquids = false;
+        public int configExtendedReachRange = 0;
         public bool isEnabled = false;
 
         public override void Load()
@@ -32,7 +33,7 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.1.18";
+            Version = "0.2.0";
             TDSMBuild = 28; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
@@ -45,11 +46,12 @@ namespace rakAntiGrief
             //properties.pushData(); //Creates default values if needed. [Out-Dated]
 
             //read properties data
-            configDoorChange = properties.ExtendedReachDoor;
-            configTileChange = properties.ExtendedReach;
-            configSignEdit = properties.ExtendedReachSign;
-            configPlayerProjectile = properties.BlockExplosives;
-            configRange = properties.ExtendedReachRange;
+            configExtendedReachDoor = properties.ExtendedReachDoor;
+            configExtendedReach = properties.ExtendedReach;
+            configExtendedReachSign = properties.ExtendedReachSign;
+            configBlockExplosives = properties.BlockExplosives;
+            configBlockLiquids = properties.BlockLiquids;
+            configExtendedReachRange = properties.ExtendedReachRange;
 
             properties.Save();
         }
@@ -63,41 +65,45 @@ namespace rakAntiGrief
             this.registerHook(Hooks.PLAYER_EDITSIGN);
             this.registerHook(Hooks.PLAYER_PROJECTILE);
             this.registerHook(Hooks.DOOR_STATECHANGE);
+            this.registerHook(Hooks.PLAYER_FLOWLIQUID);
         }
 
         public override void Disable()
         {
-            properties.Save();
-            Program.tConsole.WriteLine(base.Name + " disabled.");
+            Program.tConsole.WriteLine(base.Name + " " + base.Version + " disabled.");
             isEnabled = false;
         }
 
         public override void onPlayerTileChange(PlayerTileChangeEvent Event)
         {
-            if (isEnabled == false || configTileChange == false)
+            if (isEnabled == false || configExtendedReach == false)
             {
                 return;
             }
-            else
+
+            Player Player = (Player)Event.Sender;
+
+            if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configExtendedReachRange) //Relatively long task - possibly change to simple square area rather than a circle
             {
-                Player Player = (Player)Event.Sender;
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configRange) //Relatively long task - possibly change to simple square area rather than a circle
-                {
-                    Event.Cancelled = true;
-                }
+                Event.Cancelled = true;
+                return;
             }
         }
 
         public override void onPlayerEditSign(PlayerEditSignEvent Event)
         {
-            if (isEnabled == false || configSignEdit == false)
+            if (isEnabled == false || configExtendedReachSign == false)
             {
                 return;
             }
             else
             {
-                Player Player = (Player)Event.Sender;
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Sign.x), 2) + Math.Pow((Player.Location.Y / 16 - Event.Sign.y), 2)) > configRange)
+                Player Player = Event.Sender as Player;
+                if (Player == null)
+                {
+                    return;
+                }
+                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Sign.x), 2) + Math.Pow((Player.Location.Y / 16 - Event.Sign.y), 2)) > configExtendedReachRange)
                 {
                     Event.Cancelled = true;
                     Player.sendMessage("You are too far away to edit that sign.",255,255,0,0);
@@ -108,18 +114,18 @@ namespace rakAntiGrief
 
         public override void onDoorStateChange(DoorStateChangeEvent Event)
         {
-            if (isEnabled == false || configDoorChange == false)
+            if (isEnabled == false || configExtendedReachDoor == false)
             {
                 return;
             }
             else
             {
-                Player Player = (Event.Sender as Player);
+                Player Player = Event.Sender as Player;
                 if (Player == null)
                 {
                     return;
                 }
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configRange)
+                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configExtendedReachRange)
                 {
                     Event.Cancelled = true;
                     String direction;
@@ -139,21 +145,45 @@ namespace rakAntiGrief
 
         public override void onPlayerProjectileUse(PlayerProjectileEvent Event)
         {
-            if (isEnabled == false || configPlayerProjectile == false)
+            if (isEnabled == false || configBlockExplosives == false)
             {
                 return;
             }
             else
             {
-                Player Player = (Player)Event.Sender;
+                Player Player = Event.Sender as Player;
+                if (Player == null)
+                {
+                    return;
+                }
                 ProjectileType type = Event.Projectile.type;
-                //Program.tConsole.WriteLine("[" + base.Name + "] " + Event.Sender.Name + " Launched Projectile of type " + type + "(" + Event.Projectile.Name + ")");
                 if (type == ProjectileType.DYNAMITE || type == ProjectileType.GRENADE || type == ProjectileType.BOMB || type == ProjectileType.BOMB_STICKY)
                 {
                     Event.Cancelled = true;
                     Player.sendMessage("You are not allowed to use explosives on this server.", 255, 255, 0, 0);
                     Program.tConsole.WriteLine("[" + base.Name + "] Cancelled explosives use of Player: " + Player.Name);
                 }
+            }
+        }
+
+        public override void onPlayerFlowLiquid(PlayerFlowLiquidEvent Event)
+        {
+            if (isEnabled == false || configBlockExplosives == false)
+            {
+                return;
+            }
+
+            Player Player = Event.Sender as Player;
+            if (Player == null)
+            {
+                return;
+            }
+
+            if (configBlockLiquids == true || (Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configExtendedReachRange)
+            {
+                Event.Cancelled = true;
+                    Player.sendMessage("You are not allowed to use liquids on this server.", 255, 255, 0, 0);
+                    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled liquid use of Player: " + Player.Name);
             }
         }
 

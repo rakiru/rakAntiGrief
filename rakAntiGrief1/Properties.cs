@@ -12,6 +12,7 @@ namespace rakAntiGrief
         private const bool DEFAULT_EXTENDED_REACH = true; //Breaking/placing blocks from far away
         private const bool DEFAULT_EXTENDED_REACH_SIGN = true; //Toggling doors from far away
         private const bool DEFAULT_BLOCK_EXPLOSIVES = true; //Block explosives from being used
+        private const bool DEFAULT_BLOCK_LIQUIDS = true; //Block liquids from being used
         private const int DEFAULT_EXTENDED_REACH_RANGE = 6; //Max distance to edit tile/door/sign
         private const bool DEFAULT_SPAM_EXPLOSIVES_KICK = true; //Kick user if they spam explosives (using a modded client)
 
@@ -19,6 +20,7 @@ namespace rakAntiGrief
         private const String EXTENDED_REACH = "ExtendedReach";
         private const String EXTENDED_REACH_SIGN = "ExtendedReachSign";
         private const String BLOCK_EXPLOSIVES = "BlockExplosives";
+        private const String BLOCK_LIQUIDS = "BlockLiquids";
         private const String EXTENDED_REACH_RANGE = "ExtendedReachRange";
         private const String SPAM_EXPLOSIVES_KICK = "SpamExplosivesKick";
 
@@ -62,6 +64,14 @@ namespace rakAntiGrief
             get
             {
                 return getValue(BLOCK_EXPLOSIVES, DEFAULT_BLOCK_EXPLOSIVES);
+            }
+        }
+
+        public bool BlockLiquids
+        {
+            get
+            {
+                return getValue(BLOCK_LIQUIDS, DEFAULT_BLOCK_LIQUIDS);
             }
         }
 
