@@ -45,11 +45,11 @@ namespace rakAntiGrief
             //properties.pushData(); //Creates default values if needed. [Out-Dated]
 
             //read properties data
-            configDoorChange = properties.DoorChange;
-            configTileChange = properties.TileChange;
-            configSignEdit = properties.SignEdit;
-            configPlayerProjectile = properties.PlayerProjectile;
-            configRange = properties.Range;
+            configDoorChange = properties.ExtendedReachDoor;
+            configTileChange = properties.ExtendedReach;
+            configSignEdit = properties.ExtendedReachSign;
+            configPlayerProjectile = properties.BlockExplosives;
+            configRange = properties.ExtendedReachRange;
 
             properties.Save();
         }
@@ -81,7 +81,7 @@ namespace rakAntiGrief
             else
             {
                 Player Player = (Player)Event.Sender;
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configRange)
+                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configRange) //Relatively long task - possibly change to simple square area rather than a circle
                 {
                     Event.Cancelled = true;
                 }
@@ -119,11 +119,20 @@ namespace rakAntiGrief
                 {
                     return;
                 }
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configRange) //Relatively long task - possibly change to simple square area rather than a circle
+                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configRange)
                 {
                     Event.Cancelled = true;
-                    Player.sendMessage("You are too far away to " + Event.Direction + " that door", 255, 255, 0, 0);
-                    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled Door Change of Player: " + Player.Name);
+                    String direction;
+                    if (Event.Direction == 1)
+                    {
+                        direction = "open";
+                    }
+                    else
+                    {
+                        direction = "close";
+                    }
+                    Player.sendMessage("You are too far away to " + direction + " that door", 255, 255, 0, 0);
+                    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled extended reach door change of Player: " + Player.Name);
                 }
             }
         }
@@ -143,7 +152,7 @@ namespace rakAntiGrief
                 {
                     Event.Cancelled = true;
                     Player.sendMessage("You are not allowed to use explosives on this server.", 255, 255, 0, 0);
-                    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled Projectile Use of Player: " + ((Player)Event.Sender).Name);
+                    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled explosives use of Player: " + Player.Name);
                 }
             }
         }

@@ -8,66 +8,68 @@ namespace rakAntiGrief
 {
     public class Properties : PropertiesFile
     {
-        private const bool DEFAULT_DOOR_CHANGE = true;
-        private const bool DEFAULT_TILE_CHANGE = true;
-        private const bool DEFAULT_SIGN_EDIT = true;
-        private const bool DEFAULT_PLAYER_PROJECTILE = true;
-        private const int DEFAULT_RANGE = 6;
+        private const bool DEFAULT_EXTENDED_REACH_DOOR = true; //Toggling doors from far away
+        private const bool DEFAULT_EXTENDED_REACH = true; //Breaking/placing blocks from far away
+        private const bool DEFAULT_EXTENDED_REACH_SIGN = true; //Toggling doors from far away
+        private const bool DEFAULT_BLOCK_EXPLOSIVES = true; //Block explosives from being used
+        private const int DEFAULT_EXTENDED_REACH_RANGE = 6; //Max distance to edit tile/door/sign
+        private const bool DEFAULT_SPAM_EXPLOSIVES_KICK = true; //Kick user if they spam explosives (using a modded client)
 
-        private const String DOOR_CHANGE = "DoorChange";
-        private const String TILE_CHANGE = "TileChange";
-        private const String SIGN_EDIT = "SignEdit";
-        private const String PLAYER_PROJECTILE = "PlayerProjectile";
-        private const String RANGE = "Range";
+        private const String EXTENDED_REACH_DOOR = "ExtendedReachDoor";
+        private const String EXTENDED_REACH = "ExtendedReach";
+        private const String EXTENDED_REACH_SIGN = "ExtendedReachSign";
+        private const String BLOCK_EXPLOSIVES = "BlockExplosives";
+        private const String EXTENDED_REACH_RANGE = "ExtendedReachRange";
+        private const String SPAM_EXPLOSIVES_KICK = "SpamExplosivesKick";
 
         public Properties(String propertiesPath) : base(propertiesPath) { }
 
         public void pushData()
         {
-            object temp = DoorChange;
-            temp = TileChange;
-            temp = SignEdit;
-            temp = PlayerProjectile;
-            temp = Range;
+            object temp = ExtendedReachDoor;
+            temp = ExtendedReach;
+            temp = ExtendedReachSign;
+            temp = BlockExplosives;
+            temp = ExtendedReachRange;
         }
 
-        public bool DoorChange
+        public bool ExtendedReachDoor
         {
             get
             {
-                return getValue(DOOR_CHANGE, DEFAULT_DOOR_CHANGE);
+                return getValue(EXTENDED_REACH_DOOR, DEFAULT_EXTENDED_REACH_DOOR);
             }
         }
 
-        public bool TileChange
+        public bool ExtendedReach
         {
             get
             {
-                return getValue(TILE_CHANGE, DEFAULT_TILE_CHANGE);
+                return getValue(EXTENDED_REACH, DEFAULT_EXTENDED_REACH);
             }
         }
 
-        public bool SignEdit
+        public bool ExtendedReachSign
         {
             get
             {
-                return getValue(SIGN_EDIT, DEFAULT_SIGN_EDIT);
+                return getValue(EXTENDED_REACH_SIGN, DEFAULT_EXTENDED_REACH_SIGN);
             }
         }
 
-        public bool PlayerProjectile
+        public bool BlockExplosives
         {
             get
             {
-                return getValue(PLAYER_PROJECTILE, DEFAULT_PLAYER_PROJECTILE);
+                return getValue(BLOCK_EXPLOSIVES, DEFAULT_BLOCK_EXPLOSIVES);
             }
         }
 
-        public int Range
+        public int ExtendedReachRange
         {
             get
             {
-                return getValue(RANGE, DEFAULT_RANGE);
+                return getValue(EXTENDED_REACH_RANGE, DEFAULT_EXTENDED_REACH_RANGE);
             }
         }
     }
