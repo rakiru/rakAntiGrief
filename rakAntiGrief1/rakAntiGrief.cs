@@ -32,7 +32,7 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.1.17";
+            Version = "0.1.18";
             TDSMBuild = 28; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
@@ -43,7 +43,6 @@ namespace rakAntiGrief
             properties = new Properties(pluginFolder + Path.DirectorySeparatorChar + Name + ".properties");
             properties.Load();
             //properties.pushData(); //Creates default values if needed. [Out-Dated]
-            properties.Save();
 
             //read properties data
             configDoorChange = properties.DoorChange;
@@ -51,6 +50,8 @@ namespace rakAntiGrief
             configSignEdit = properties.SignEdit;
             configPlayerProjectile = properties.PlayerProjectile;
             configRange = properties.Range;
+
+            properties.Save();
         }
 
         public override void Enable()
@@ -83,11 +84,6 @@ namespace rakAntiGrief
                 if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Position.Y), 2)) > configRange)
                 {
                     Event.Cancelled = true;
-                //    Program.tConsole.WriteLine("[" + base.Name + "] Cancelled Tile Change (" + Event.Position.X + "," + Event.Position.Y + ") of Player: " + Player.Name + " (" + Player.getLocation().X / 16 + "," + Player.getTileLocation().Y * 16 + ") at distance: " + Distance);
-                //}
-                //else
-                //{
-                //    Program.tConsole.WriteLine("[" + base.Name + "] Allowed Tile Change (" + Event.Position.X + "," + Event.Position.Y + ") of Player: " + Player.Name + " (" + Player.getLocation().X / 16 + "," + Player.getTileLocation().Y * 16 + ") at distance: " + Distance);
                 }
             }
         }
@@ -118,8 +114,12 @@ namespace rakAntiGrief
             }
             else
             {
-                Player Player = (Player)Event.Sender;
-                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configRange)
+                Player Player = (Event.Sender as Player);
+                if (Player == null)
+                {
+                    return;
+                }
+                if (Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configRange) //Relatively long task - possibly change to simple square area rather than a circle
                 {
                     Event.Cancelled = true;
                     Player.sendMessage("You are too far away to " + Event.Direction + " that door", 255, 255, 0, 0);
