@@ -23,8 +23,8 @@ namespace rakAntiGrief
         private const String BLOCK_EXPLOSIVES = "BlockExplosives";
         private const String EXTENDED_REACH_RANGE = "ExtendedReachRange";
         private const String SPAM_EXPLOSIVES_KICK = "SpamExplosivesKick";
-		private const String BLOCK_LAVA_FLOW = "LavaFlow";
-		private const String BLOCK_WATER_FLOW = "WaterFlow";
+		private const String BLOCK_LAVA_FLOW = "BlockLavaFlow";
+		private const String BLOCK_WATER_FLOW = "BlockWaterFlow";
 
         public Properties(String propertiesPath) : base(propertiesPath) { }
 

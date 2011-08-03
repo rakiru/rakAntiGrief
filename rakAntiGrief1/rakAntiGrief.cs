@@ -39,7 +39,7 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.2.2";
+            Version = "0.2.4";
             TDSMBuild = 29; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
@@ -83,29 +83,36 @@ namespace rakAntiGrief
             isEnabled = false;
         }
 
-        public override void onPlayerFlowLiquid(PlayerFlowLiquidEvent ev)
+        public override void onPlayerFlowLiquid(PlayerFlowLiquidEvent Event)
         {
             if (isEnabled == false || (!configBlockLavaFlow && !configBlockWaterFlow))
             {
                 return;
             }
 
-            Player player = ev.Sender as Player;
+            Player player = Event.Sender as Player;
             if (player == null) return;
 
             if (player.Op) return;
 
-            int x = (int)ev.Position.X;
-            int y = (int)ev.Position.Y;
+            int x = (int)Event.Position.X;
+            int y = (int)Event.Position.Y;
 
-            if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || (Math.Sqrt(Math.Pow((player.Location.X / 16 - x), 2) + Math.Pow((player.Location.Y / 16 - y), 2)) > configExtendedReachRange))
+            if (Event.Lava && configBlockLavaFlow)
             {
-                if ((ev.Lava && configBlockLavaFlow) || (!ev.Lava && configBlockWaterFlow))
-                {
-                    ProgramLog.Debug.Log("[" + base.Name + "]: Cancelled out of reach {1} flow by {0}", player.Name ?? player.whoAmi.ToString(), ev.Lava ? "lava" : "water");
-                    ev.Cancelled = true;
-                    return;
-                }
+                player.sendMessage("You are not allowed to use lava on this server.", 255, 255, 0, 0);
+                return;
+            }
+            else if (!Event.Lava && configBlockWaterFlow)
+            {
+                player.sendMessage("You are not allowed to use water on this server.", 255, 255, 0, 0);
+                return;
+            }
+            else if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || (Math.Sqrt(Math.Pow((player.Location.X / 16 - x), 2) + Math.Pow((player.Location.Y / 16 - y), 2)) > configExtendedReachRange))
+            {
+                ProgramLog.Debug.Log("[" + base.Name + "]: Cancelled out of reach {1} flow by {0}", player.Name ?? player.whoAmi.ToString(), Event.Lava ? "lava" : "water");
+                Event.Cancelled = true;
+                return;
             }
         }
 
