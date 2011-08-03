@@ -39,7 +39,7 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.2.4";
+            Version = "0.2.5";
             TDSMBuild = 29; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
@@ -100,11 +100,13 @@ namespace rakAntiGrief
 
             if (Event.Lava && configBlockLavaFlow)
             {
+                Event.Cancelled = true;
                 player.sendMessage("You are not allowed to use lava on this server.", 255, 255, 0, 0);
                 return;
             }
             else if (!Event.Lava && configBlockWaterFlow)
             {
+                Event.Cancelled = true;
                 player.sendMessage("You are not allowed to use water on this server.", 255, 255, 0, 0);
                 return;
             }
