@@ -19,29 +19,28 @@ namespace rakAntiGrief
     {
 
         // tConsole is used for when logging Output to the console & a log file.
-        
+
         public Properties properties;
         public string pluginFolder;
         public bool configExtendedReachDoor = false;
         public bool configExtendedReach = false;
         public bool configExtendedReachSign = false;
         public bool configBlockExplosives = false;
-        public bool configBlockLiquids = false;
         public int configExtendedReachRange = 0;
-		public bool configLavaFlow = false;
-		public bool configWaterFlow = false;
+        public bool configBlockLavaFlow = false;
+        public bool configBlockWaterFlow = false;
         public bool isEnabled = false;
 
-		static HashSet<PlayerState> states;
-		static System.Threading.Timer timer;
+        static HashSet<PlayerState> states;
+        static System.Threading.Timer timer;
 
         public override void Load()
         {
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.2.0";
-            TDSMBuild = 28; //Current Release - Working
+            Version = "0.2.2";
+            TDSMBuild = 29; //Current Release - Working
 
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
             //Create folder if it doesn't exist
@@ -56,27 +55,25 @@ namespace rakAntiGrief
             configExtendedReach = properties.ExtendedReach;
             configExtendedReachSign = properties.ExtendedReachSign;
             configBlockExplosives = properties.BlockExplosives;
-            configBlockLiquids = properties.BlockLiquids;
             configExtendedReachRange = properties.ExtendedReachRange;
-			configLavaFlow = properties.LavaFlow;
-			configWaterFlow = properties.WaterFlow;
-			properties.Save();
+            configBlockLavaFlow = properties.BlockLavaFlow;
+            configBlockWaterFlow = properties.BlockWaterFlow;
+            properties.Save();
 
-			states = new HashSet<PlayerState>();
-			timer = new System.Threading.Timer(ExpireProjectiles);
-			timer.Change(1000, 1000);
+            states = new HashSet<PlayerState>();
+            timer = new System.Threading.Timer(ExpireProjectiles);
+            timer.Change(1000, 1000);
         }
 
         public override void Enable()
         {
             ProgramLog.Admin.Log(base.Name + " " + base.Version + " enabled.");
             isEnabled = true;
-			//Register Hooks
-			this.registerHook(Hooks.PLAYER_TILECHANGE);
-			this.registerHook(Hooks.PLAYER_EDITSIGN);
-			this.registerHook(Hooks.PLAYER_PROJECTILE);
-			this.registerHook(Hooks.DOOR_STATECHANGE);
-			this.registerHook(Hooks.PLAYER_FLOWLIQUID);
+            //Register Hooks
+            this.registerHook(Hooks.PLAYER_TILECHANGE);
+            this.registerHook(Hooks.PLAYER_EDITSIGN);
+            this.registerHook(Hooks.PLAYER_PROJECTILE);
+            this.registerHook(Hooks.DOOR_STATECHANGE);
             this.registerHook(Hooks.PLAYER_FLOWLIQUID);
         }
 
@@ -86,134 +83,160 @@ namespace rakAntiGrief
             isEnabled = false;
         }
 
-		public override void onPlayerTileChange(PlayerTileChangeEvent Event)
-		{
-			if (isEnabled == false || configExtendedReach == false)
-			{
-				return;
-			}
-			else
-			{
-				Player player = Event.Sender as Player;
-				if (player == null) return;
+        public override void onPlayerFlowLiquid(PlayerFlowLiquidEvent ev)
+        {
+            if (isEnabled == false || (!configBlockLavaFlow && !configBlockWaterFlow))
+            {
+                return;
+            }
 
-				if (player.Op) return;
+            Player player = ev.Sender as Player;
+            if (player == null) return;
 
-				int x = (int)Event.Position.X;
-				int y = (int)Event.Position.Y;
+            if (player.Op) return;
 
-				if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || (Math.Sqrt(Math.Pow((player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((player.Location.Y / 16 - Event.Position.Y), 2)) > configExtendedReachRange))
-				{
-					Event.Cancelled = true;
-					return;
-				}
-			}
-		}
+            int x = (int)ev.Position.X;
+            int y = (int)ev.Position.Y;
 
-		public override void onPlayerEditSign(PlayerEditSignEvent Event)
-		{
-			if (isEnabled == false || configExtendedReachSign == false)
-			{
-				return;
-			}
-			else
-			{
-				Player Player = Event.Sender as Player;
+            if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || (Math.Sqrt(Math.Pow((player.Location.X / 16 - x), 2) + Math.Pow((player.Location.Y / 16 - y), 2)) > configExtendedReachRange))
+            {
+                if ((ev.Lava && configBlockLavaFlow) || (!ev.Lava && configBlockWaterFlow))
+                {
+                    ProgramLog.Debug.Log("[" + base.Name + "]: Cancelled out of reach {1} flow by {0}", player.Name ?? player.whoAmi.ToString(), ev.Lava ? "lava" : "water");
+                    ev.Cancelled = true;
+                    return;
+                }
+            }
+        }
 
-				if (Player != null && Player.AuthenticatedAs == null)
-				{
-					Event.Cancelled = true;
-				}
-				if (Player != null && Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Sign.x), 2) + Math.Pow((Player.Location.Y / 16 - Event.Sign.y), 2)) > configExtendedReachRange)
-				{
-					Event.Cancelled = true;
-					Player.sendMessage("You are too far away to edit that sign.", 255, 255, 0, 0);
-					ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Sign Edit of Player: " + Player.Name);
-				}
-			}
-		}
+        public override void onPlayerTileChange(PlayerTileChangeEvent Event)
+        {
+            if (isEnabled == false || configExtendedReach == false)
+            {
+                return;
+            }
+            else
+            {
+                Player player = Event.Sender as Player;
+                if (player == null) return;
 
-		public override void onDoorStateChange(DoorStateChangeEvent Event)
-		{
-			if (isEnabled == false || configExtendedReachDoor == false)
-			{
-				return;
-			}
-			else
-			{
-				Player Player = Event.Sender as Player;
-				if (Player != null && Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configExtendedReachRange)
-				{
-					Event.Cancelled = true;
-					Player.sendMessage("You are too far away to " + Event.Direction + " that door", 255, 255, 0, 0);
-					ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Door Change of Player: " + Player.Name);
-				}
-			}
-		}
+                if (player.Op) return;
 
-		class PlayerState
-		{
-			public int projectiles;
-		}
+                int x = (int)Event.Position.X;
+                int y = (int)Event.Position.Y;
 
-		public void ExpireProjectiles(object dummy)
-		{
-			foreach (var state in states)
-			{
-				state.projectiles = 0;
-			}
-		}
+                if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || (Math.Sqrt(Math.Pow((player.Location.X / 16 - Event.Position.X), 2) + Math.Pow((player.Location.Y / 16 - Event.Position.Y), 2)) > configExtendedReachRange))
+                {
+                    Event.Cancelled = true;
+                    return;
+                }
+            }
+        }
 
-		public override void onPlayerProjectileUse(PlayerProjectileEvent Event)
-		{
-			if (isEnabled == false || configBlockExplosives == false)
-			{
-				return;
-			}
-			else
-			{
-				Player player = Event.Sender as Player;
-				if (player == null || player.Op) return;
+        public override void onPlayerEditSign(PlayerEditSignEvent Event)
+        {
+            if (isEnabled == false || configExtendedReachSign == false)
+            {
+                return;
+            }
+            else
+            {
+                Player Player = Event.Sender as Player;
 
-				PlayerState state = null;
-				if (!player.PluginData.Contains(this))
-				{
-					state = new PlayerState();
-					player.PluginData[this] = state;
-					states.Add(state);
-				}
-				else
-					state = (PlayerState)player.PluginData[this];
+                if (Player != null && Player.AuthenticatedAs == null)
+                {
+                    Event.Cancelled = true;
+                }
+                if (Player != null && Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.Sign.x), 2) + Math.Pow((Player.Location.Y / 16 - Event.Sign.y), 2)) > configExtendedReachRange)
+                {
+                    Event.Cancelled = true;
+                    Player.sendMessage("You are too far away to edit that sign.", 255, 255, 0, 0);
+                    ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Sign Edit of Player: " + Player.Name);
+                }
+            }
+        }
 
-				ProjectileType type = Event.Projectile.type;
+        public override void onDoorStateChange(DoorStateChangeEvent Event)
+        {
+            if (isEnabled == false || configExtendedReachDoor == false)
+            {
+                return;
+            }
+            else
+            {
+                Player Player = Event.Sender as Player;
+                if (Player != null && Math.Sqrt(Math.Pow((Player.Location.X / 16 - Event.X), 2) + Math.Pow((Player.Location.Y / 16 - Event.Y), 2)) > configExtendedReachRange)
+                {
+                    Event.Cancelled = true;
+                    Player.sendMessage("You are too far away to " + Event.Direction + " that door", 255, 255, 0, 0);
+                    ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Door Change of Player: " + Player.Name);
+                }
+            }
+        }
 
-				state.projectiles += 1;
+        class PlayerState
+        {
+            public int projectiles;
+        }
 
-				if (state.projectiles >= 9)
-				{
-					Event.Cancelled = true;
-					state.projectiles -= 9;
-					ProgramLog.Admin.Log("[" + base.Name + "]: Stopped projectile {0} spam from {1}.", type, player.Name ?? "<null>");
-					return;
-				}
+        public void ExpireProjectiles(object dummy)
+        {
+            foreach (var state in states)
+            {
+                state.projectiles = 0;
+            }
+        }
+
+        public override void onPlayerProjectileUse(PlayerProjectileEvent Event)
+        {
+            if (isEnabled == false || configBlockExplosives == false)
+            {
+                return;
+            }
+            else
+            {
+                Player player = Event.Sender as Player;
+                if (player == null || player.Op) return;
+
+                PlayerState state = null;
+                if (!player.PluginData.Contains(this))
+                {
+                    state = new PlayerState();
+                    player.PluginData[this] = state;
+                    states.Add(state);
+                }
+                else
+                    state = (PlayerState)player.PluginData[this];
+
+                ProjectileType type = Event.Projectile.type;
+
+                state.projectiles += 1;
+
+                if (state.projectiles >= 9)
+                {
+                    Event.Cancelled = true;
+                    state.projectiles -= 9;
+                    ProgramLog.Admin.Log("[" + base.Name + "]: Stopped projectile {0} spam from {1}.", type, player.Name ?? "<null>");
+                    return;
+                }
 
 
-				//Program.tConsole.WriteLine("[" + base.Name + "] " + Event.Sender.Name + " Launched Projectile of type " + type + "(" + Event.Projectile.Name + ")");
-				if (player != null && (type == ProjectileType.DYNAMITE || type == ProjectileType.GRENADE || type == ProjectileType.BOMB || type == ProjectileType.BOMB_STICKY))
-				{
-					Event.Cancelled = true;
-					player.sendMessage("You are not allowed to use explosives on this server.", 255, 255, 0, 0);
-					ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Projectile Use of Player: " + ((Player)Event.Sender).Name);
-				}
-			}
-		}
+                //Program.tConsole.WriteLine("[" + base.Name + "] " + Event.Sender.Name + " Launched Projectile of type " + type + "(" + Event.Projectile.Name + ")");
+                if (player != null && (type == ProjectileType.DYNAMITE || type == ProjectileType.GRENADE || type == ProjectileType.BOMB || type == ProjectileType.BOMB_STICKY))
+                {
+                    Event.Cancelled = true;
+                    player.sendMessage("You are not allowed to use explosives on this server.", 255, 255, 0, 0);
+                    ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Projectile Use of Player: " + ((Player)Event.Sender).Name);
+                }
+            }
+        }
 
-		private static void CreateDirectory(string dirPath)
-		{
-			if (!Directory.Exists(dirPath))
-			{
-				Directory.CreateDirectory(dirPath);
-			}
-		}
-	}
+        private static void CreateDirectory(string dirPath)
+        {
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
+            }
+        }
+    }
 }
