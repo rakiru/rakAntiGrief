@@ -44,8 +44,8 @@ namespace rakAntiGrief
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
-            Version = "0.4.44";
-            TDSMBuild = 31; //Current Release - Working
+            Version = "0.4.44"; // change this to your new version number
+            TDSMBuild = 36; //Current Release - Working
         }
         
         protected override void Initialized(object state)
