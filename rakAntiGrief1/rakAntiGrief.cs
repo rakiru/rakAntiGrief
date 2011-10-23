@@ -5,17 +5,16 @@ using System.Text;
 
 
 using rakAntiGrief;
-using Terraria_Server.Plugin;
+using Terraria_Server.Plugins;
 using Terraria_Server.Definitions;
 using Terraria_Server;
 using Terraria_Server.Commands;
-using Terraria_Server.Events;
 using Terraria_Server.Logging;
 using System.IO;
 
 namespace rakAntiGrief
 {
-    public class rakAntiGrief : Plugin
+    public class rakAntiGrief : BasePlugin
     {
 
         // tConsole is used for when logging Output to the console & a log file.
@@ -36,20 +35,21 @@ namespace rakAntiGrief
         public bool configSpawnProtection = false;
         public int configSpawnProtectionType = 0;
         public int configSpawnProtectionRange = 0;
-        public bool isEnabled = false;
 
         static HashSet<PlayerState> states;
         static System.Threading.Timer timer;
         static System.Threading.Timer timer2;
 
-        public override void Load()
-        {
+        public rakAntiGrief (){
             Name = "rakAntiGrief";
             Description = "Attempts to stop common griefing attempts";
             Author = "rakiru";
             Version = "0.4.44";
             TDSMBuild = 31; //Current Release - Working
-
+        }
+        
+        protected override void Initialized(object state)
+        {
             string pluginFolder = Statics.PluginPath + Path.DirectorySeparatorChar + Name;
             //Create folder if it doesn't exist
             CreateDirectory(pluginFolder);
@@ -82,166 +82,160 @@ namespace rakAntiGrief
             timer2.Change(10000, 10000);
         }
 
-        public override void Enable()
+        protected override void Enabled()
         {
-            ProgramLog.Admin.Log(base.Name + " " + base.Version + " enabled.");
-            isEnabled = true;
-            //Register Hooks
-            this.registerHook(Hooks.PLAYER_TILECHANGE);
-            this.registerHook(Hooks.PLAYER_EDITSIGN);
-            this.registerHook(Hooks.PLAYER_PROJECTILE);
-            this.registerHook(Hooks.DOOR_STATECHANGE);
-            this.registerHook(Hooks.PLAYER_FLOWLIQUID);
-            this.registerHook(Hooks.PLAYER_CHAT);
-            this.registerHook(Hooks.PLAYER_TELEPORT);
-            this.registerHook(Hooks.PLAYER_MOVE);
+            ProgramLog.Plugin.Log(base.Name + " " + base.Version + " enabled.");
         }
 
-        public override void Disable()
+        protected override void Disabled()
         {
-            ProgramLog.Admin.Log(base.Name + " " + base.Version + " disabled.");
-            isEnabled = false;
+            ProgramLog.Plugin.Log(base.Name + " " + base.Version + " disabled.");
         }
 
-        public override void onPlayerFlowLiquid(PlayerFlowLiquidEvent Event)
+        [Hook(HookOrder.LATE)]
+        void OnLiquidFlow(ref HookContext ctx, ref HookArgs.LiquidFlowReceived args)
         {
-            if (isEnabled == false || (!configBlockLavaFlow && !configBlockWaterFlow))
+            if (!configBlockLavaFlow && !configBlockWaterFlow)
             {
                 return;
             }
 
-            Player player = Event.Sender as Player;
+            Player player = ctx.Sender as Player;
             if (player == null) return;
 
             if (player.Op) return;
 
-            int x = (int)Event.Position.X;
-            int y = (int)Event.Position.Y;
+            int x = (int)args.X;
+            int y = (int)args.Y;
 
-            if (Event.Lava && configBlockLavaFlow)
+            if (args.Lava && configBlockLavaFlow)
             {
-                Event.Cancelled = true;
+                ctx.SetResult(HookResult.IGNORE);
                 player.sendMessage("You are not allowed to use lava on this server.", 255, 255, 0, 0);
                 return;
             }
-            else if (!Event.Lava && configBlockWaterFlow)
+            else if (!args.Lava && configBlockWaterFlow)
             {
-                Event.Cancelled = true;
+                ctx.SetResult(HookResult.IGNORE);
                 player.sendMessage("You are not allowed to use water on this server.", 255, 255, 0, 0);
                 return;
             }
             else if (inSpawn(x, y))
             {
-                Event.Cancelled = true;
+                ctx.SetResult(HookResult.IGNORE);
                 player.sendMessage("You are not allowed to edit spawn on this server.", 255, 255, 0, 0);
                 return;
             }
             else if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || distance(player.Location.X, player.Location.Y, x, y) > configExtendedReachRange)
             {
                 //ProgramLog.Debug.Log("[" + base.Name + "]: Cancelled out of reach {1} flow by {0}.", player.Name ?? player.whoAmi.ToString(), Event.Lava ? "lava" : "water");
-                Event.Cancelled = true;
+                ctx.SetResult(HookResult.IGNORE);
                 return;
             }
         }
 
-        public override void onPlayerTileChange(PlayerTileChangeEvent Event)
+        [Hook(HookOrder.EARLY)]
+        void OnAlter(ref HookContext ctx, ref HookArgs.PlayerWorldAlteration args)
         {
-            if (isEnabled == false || configExtendedReach == false)
+            if (configExtendedReach == false)
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
 
                 if (player == null || player.Op == true)
                 {
                     return;
                 }
 
-                int x = (int)Event.Position.X;
-                int y = (int)Event.Position.Y;
+                int x = (int)args.X;
+                int y = (int)args.Y;
 
                 if (inSpawn(x, y))
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     player.sendMessage("You are not allowed to edit spawn on this server.", 255, 255, 0, 0);
                     return;
                 }
                 else if (x < 0 || y < 0 || x > Main.maxTilesX || y > Main.maxTilesY || distance(player.Location.X, player.Location.Y, x, y) > configExtendedReachRange)
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     return;
                 }
             }
         }
 
-        public override void onPlayerEditSign(PlayerEditSignEvent Event)
+        [Hook(HookOrder.EARLY)]
+        void OnSignTextSet(ref HookContext ctx, ref HookArgs.SignTextSet args)
         {
-            if (isEnabled == false || configExtendedReachSign == false)
+            if (configExtendedReachSign == false)
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
 
                 if (player == null || player.Op == true)
                 {
                     return;
                 }
 
-                int x = (int)Event.Sign.x;
-                int y = (int)Event.Sign.y;
+                int x = (int)args.X;
+                int y = (int)args.Y;
 
                 if (inSpawn(x, y))
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     player.sendMessage("You are not allowed to edit spawn on this server.", 255, 255, 0, 0);
                     return;
                 }
                 else if (distance(player.Location.X, player.Location.Y, x, y) > configExtendedReachRange)
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     player.sendMessage("You are too far away to edit that sign.", 255, 255, 0, 0);
                     ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Sign Edit of Player: " + player.Name);
                 }
             }
         }
 
-        public override void onDoorStateChange(DoorStateChangeEvent Event)
+        [Hook(HookOrder.EARLY)]
+        void OnDoorStateChanged(ref HookContext ctx, ref HookArgs.DoorStateChanged args)
         {
-            if (isEnabled == false || configExtendedReachDoor == false)
+            if (configExtendedReachDoor == false)
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
 
                 if (player == null || player.Op == true)
                 {
                     return;
                 }
 
-                if (distance(player.Location.X, player.Location.Y, Event.X, Event.Y) > configExtendedReachRange)
+                if (distance(player.Location.X, player.Location.Y, args.X, args.Y) > configExtendedReachRange)
                 {
-                    Event.Cancelled = true;
-                    player.sendMessage("You are too far away to " + Event.Direction + " that door", 255, 255, 0, 0);
+                    ctx.SetResult(HookResult.IGNORE);
+                    player.sendMessage("You are too far away to " + args.Direction + " that door", 255, 255, 0, 0);
                     ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Door Change of Player: " + player.Name);
                 }
             }
         }
 
-        public override void onPlayerProjectileUse(PlayerProjectileEvent Event)
+        [Hook(HookOrder.EARLY)]
+        void OnProjectile(ref HookContext ctx, ref HookArgs.ProjectileReceived args)
         {
-            if (isEnabled == false || configBlockExplosives == false || Event.Projectile.type==ProjectileType.ORB_OF_LIGHT || Event.Projectile.type==ProjectileType.FLAMELASH )
+            if (configBlockExplosives == false || args.Type==ProjectileType.ORB_OF_LIGHT || args.Type==ProjectileType.FLAMELASH )
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
                 if (player == null) return;
 
                 PlayerState state = null;
@@ -256,7 +250,7 @@ namespace rakAntiGrief
                     state = (PlayerState)player.PluginData[this];
                 }
 
-                ProjectileType type = Event.Projectile.type;
+                ProjectileType type = args.Type;
 
                 if (!(type == ProjectileType.ORB_OF_LIGHT || type == ProjectileType.FLAMELASH || type == ProjectileType.MISSILE_MAGIC))
                 {
@@ -265,7 +259,7 @@ namespace rakAntiGrief
 
                 if (state.projectiles >= 9)
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     state.projectiles -= 9;
 					ProgramLog.Admin.Log("[" + base.Name + "]: Stopped projectile {0} spam from {1}.", type, player.Name ?? "<null>");
                     return;
@@ -273,22 +267,23 @@ namespace rakAntiGrief
 
                 if (player != null && (type == ProjectileType.DYNAMITE || type == ProjectileType.GRENADE || type == ProjectileType.BOMB || type == ProjectileType.BOMB_STICKY || type == ProjectileType.ARROW_HELLFIRE))
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     player.sendMessage("You are not allowed to use explosives on this server.", 255, 255, 0, 0);
-                    ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Projectile Use of Player: " + ((Player)Event.Sender).Name);
+                    ProgramLog.Admin.Log("[" + base.Name + "]: Cancelled Projectile Use of Player: " + ((Player)ctx.Sender).Name);
                 }
             }
         }
 
-        public override void onPlayerChat(MessageEvent Event)
+        [Hook(HookOrder.TERMINAL)]
+        void onPlayerChat(ref HookContext ctx, ref HookArgs.PlayerChat args)
         {
-            if (isEnabled == false || configBlockChatSpam == false)
+            if (configBlockChatSpam == false)
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
                 if (player == null || player.Op) return;
 
                 PlayerState state = null;
@@ -307,7 +302,7 @@ namespace rakAntiGrief
 
                 if (state.messages >= 9)
                 {
-                    Event.Cancelled = true;
+                    ctx.SetResult(HookResult.IGNORE);
                     state.messages -= 9;
                     ProgramLog.Admin.Log("[" + base.Name + "]: Stopped chat spam from {1}.", player.Name ?? "<null>");
                     player.Kick("Do not spam chat.");
@@ -316,15 +311,16 @@ namespace rakAntiGrief
             }
         }
 
-        public override void onPlayerTeleport(PlayerTeleportEvent Event)
+        [Hook(HookOrder.TERMINAL)]
+        void onPlayerTeleport(ref HookContext ctx, ref HookArgs.PlayerTeleport args)
         {
-            if (isEnabled == false || configBlockMovementTeleport == false)
+            if (configBlockMovementTeleport == false)
             {
                 return;
             }
             else
             {
-                Player player = Event.Sender as Player;
+                Player player = ctx.Sender as Player;
                 if (player == null || player.Op) return;
 
                 PlayerState state = null;
@@ -342,9 +338,10 @@ namespace rakAntiGrief
             }
         }
 
-        public override void onPlayerMove(PlayerMoveEvent Event)
+        [Hook(HookOrder.TERMINAL)]
+        void onPlayerChat(ref HookContext ctx, ref HookArgs.PlayerTriggeredEvent args)
         {
-            Player player = Event.Sender as Player;
+            Player player = ctx.Sender as Player;
             if (player == null || player.Op) return;
 
             PlayerState state = null;
@@ -370,7 +367,7 @@ namespace rakAntiGrief
                 }
             }
 
-            var tile = Main.tile.At((int)Event.Location.X / 16, (int)Event.Location.Y / 16);
+            var tile = Main.tile.At((int)args.X / 16, (int)args.Y / 16);
             if (tile.Active && Main.tileSolid[tile.Type] && tile.Type != 19 && ++state.noclips > 3)
             {
                 ProgramLog.Admin.Log("[" + base.Name + "]: Noclip detected for {1}.", player.Name ?? "<null>");
@@ -468,8 +465,8 @@ namespace rakAntiGrief
                 return false;
             }
 
-            int spawnX = this.Server.World.SpawnX;
-            int spawnY = this.Server.World.SpawnY;
+            int spawnX = Server.World.SpawnX;
+            int spawnY = Server.World.SpawnY;
 
             switch (configSpawnProtectionType)
             {
