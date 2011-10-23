@@ -198,14 +198,14 @@ namespace rakAntiGrief
 
         public override void onPlayerProjectileUse(PlayerProjectileEvent Event)
         {
-            if (isEnabled == false || configBlockExplosives == false)
+            if (isEnabled == false || configBlockExplosives == false || Event.Projectile.type==ProjectileType.ORB_OF_LIGHT || Event.Projectile.type==ProjectileType.FLAMELASH )
             {
                 return;
             }
             else
             {
                 Player player = Event.Sender as Player;
-                if (player == null || player.Op) return;
+                if (player == null) return;
 
                 PlayerState state = null;
                 if (!player.PluginData.Contains(this))
@@ -225,7 +225,7 @@ namespace rakAntiGrief
                 {
                     Event.Cancelled = true;
                     state.projectiles -= 9;
-                    ProgramLog.Admin.Log("[" + base.Name + "]: Stopped projectile {0} spam from {1}.", type, player.Name ?? "<null>");
+					ProgramLog.Admin.Log("[" + base.Name + "]: Stopped projectile {0} spam from {1}.", type, player.Name ?? "<null>");
                     return;
                 }
 
