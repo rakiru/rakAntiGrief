@@ -410,6 +410,7 @@ namespace rakAntiGrief
 
             foreach (Player player in Main.players)
             {
+                if (player == null) continue;
                 if (!player.Active) continue;
                 int x = (int)player.Location.X;
                 int y = (int)player.Location.Y;
