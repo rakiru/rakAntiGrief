@@ -339,7 +339,7 @@ namespace rakAntiGrief
         }
 
         [Hook(HookOrder.TERMINAL)]
-        void onPlayerChat(ref HookContext ctx, ref HookArgs.PlayerTriggeredEvent args)
+        void onPlayerMove(ref HookContext ctx, ref HookArgs.PlayerTriggeredEvent args)
         {
             Player player = ctx.Sender as Player;
             if (player == null || player.Op) return;
